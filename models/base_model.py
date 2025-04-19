@@ -21,10 +21,14 @@ class BaseModel(Document):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     async def save(self):
-        pass
+        self.updated_at = datetime.utcnow()
+        await models.storage.new(self)
+        await models.storage.save()
 
     async def delete(self):
-        pass
+        await models.storage.delete(self)
+        await models.storage.save()
+
     async def to_dict(self):
         return jsonable_encoder(self.model_dump())
 
