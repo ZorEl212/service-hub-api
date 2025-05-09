@@ -1,9 +1,10 @@
 import datetime
 
+from beanie import PydanticObjectId
+from fastapi_users import schemas
 from pydantic import BaseModel
 
-class BaseAPIModel(BaseModel):
-    id: str
+class BaseAPIModel(schemas.BaseUser[PydanticObjectId]):
     created_at: datetime.datetime
     updated_at: datetime.datetime
 
