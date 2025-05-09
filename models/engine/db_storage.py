@@ -1,13 +1,13 @@
 from typing import Type, Union
-from beanie import Document
+from beanie import Document, PydanticObjectId
 import motor.motor_asyncio
+from fastapi_users.db import BeanieUserDatabase
 
 from models.engine.interface import AbstractStorageEngine
 # Example class registry (like your `classes`)
 from models.user import User
 
 classes = {"User": User}
-
 
 class DBStorage(AbstractStorageEngine):
     """Implements the same interface as FileStorage but using Beanie ODM"""
@@ -65,3 +65,6 @@ class DBStorage(AbstractStorageEngine):
     async def close(self):
         """Optional: close the MongoDB connection"""
         self.client.close()
+
+    async def get_user_db(self):
+        yield BeanieUserDatabase(User)
