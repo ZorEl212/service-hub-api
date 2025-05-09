@@ -1,31 +1,28 @@
-from pydantic import EmailStr
+from pydantic import Field
+from fastapi_users_db_beanie import BaseOAuthAccount
 
 from models.base_model import BaseModel
 from schemas.user import UserCreate
 
+from fastapi_users.db import BeanieBaseUser, BeanieUserDatabase
 
-class User(BaseModel):
+class OAuthAccount(BaseOAuthAccount):
+    pass
+
+class User(BeanieBaseUser, BaseModel):
     """User model that defines attributes and methods for user instances"""
 
-    email: EmailStr
-    password: str
     first_name: str = ""
     last_name: str = ""
     username: str = ""
+    oauth_accounts: list[OAuthAccount] = Field(default_factory=list)
 
     @classmethod
     def from_create(cls, user: UserCreate) -> "User":
         """Create a User instance from a UserCreate schema"""
         return cls(
-            email=user.email,
             first_name=user.first_name,
             last_name=user.last_name,
             username=user.username,
-            password=cls.hash_password(user.password),
         )
 
-    @staticmethod
-    def hash_password(password: str) -> str:
-        """Hash the password using a secure hashing algorithm"""
-        # Replace with secure hashing like bcrypt
-        return password
