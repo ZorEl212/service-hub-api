@@ -1,0 +1,19 @@
+[project]
+name = "service-hub-api"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "aiofiles>=24.1.0",
+    "beanie>=1.29.0",
+    "fastapi>=0.115.12",
+    "motor>=3.7.0",
+    "uvicorn>=0.34.2",
+    "pydantic[email]",
+    "loguru>=0.7.3",
+    "fastapi-users[beanie,redis]>=14.0.1",
+    "python-multipart>=0.0.20",
+    "python-jose[cryptography]>=3.4.0",
+    "passlib[bcrypt]>=1.7.4",
+    "email-validator>=2.2.0",
+]
