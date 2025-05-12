@@ -1,4 +1,8 @@
+from traceback import print_exception
+
 from models.user import User
+from models.customer import Customer
+from models.service_provider import ServiceProvider
 from schemas.user import UserCreate
 from services.app import AppCRUD
 from utils.exceptions import AppException
@@ -7,29 +11,44 @@ from utils.service_result import ServiceResult
 
 class UserCRUD(AppCRUD):
     """
-    User CRUD operations.
+    User CRUD operations including profile creation based on role.
     """
 
-    async def create_user(self, user: UserCreate) -> User | ServiceResult:
+    @staticmethod
+    async def create_profile_for_user(
+        user: User,
+        user_data: UserCreate,
+    ) -> ServiceResult:
         """
-        Create a new user.
-        :param user: UserCreate
-        :return: User
+        Attach a role-specific profile (customer or provider) to an existing user.
+        Assumes user is already created by fastapi-users.
+        :param user: User instance (already saved)
+        :param user_data: UserCreateExtended with optional profile data
+        :return: ServiceResult
         """
-        new_user = User.from_create(user)
-        if not new_user:
-            return ServiceResult(AppException.CreateItem())
-        print(f"Storage instance: {type(self.db)}")
-        await new_user.save()
-        return ServiceResult(new_user)
+        try:
+            if user_data.role == "customer":
+                if not user_data.customer_profile:
+                    return ServiceResult(AppException.BadRequest())
 
-    async def get_user(self, user_id: str) -> User | ServiceResult:
-        """
-        Get a user by ID.
-        :param user_id: int
-        :return: User
-        """
-        user = await self.db.get(cls="User", obj_id=user_id)
-        if not user:
-            return ServiceResult(AppException.GetItem())
-        return ServiceResult(user)
+                customer_profile = Customer(
+                    user_id=user
+                    **user_data.customer_profile.model_dump(mode="python")
+                )
+                await customer_profile.insert()
+
+            elif user_data.role == "provider":
+                if not user_data.provider_profile:
+                    return ServiceResult(AppException.BadRequest())
+
+                provider_profile = ServiceProvider(
+                    user_id=user,
+                    **user_data.provider_profile.model_dump(mode="python")
+                )
+                await provider_profile.insert()
+
+            return ServiceResult(user)
+
+        except Exception as e:
+            print_exception(*e.args)
+            return ServiceResult(AppException.CreateItem())
