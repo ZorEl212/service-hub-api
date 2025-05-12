@@ -42,6 +42,14 @@ class AppException(object):
             status_code = 404
             AppExceptionCase.__init__(self, status_code, context)
 
+    class BadRequest(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            """
+            Bad request
+            """
+            status_code = 400
+            AppExceptionCase.__init__(self, status_code, context)
+
     class ItemRequiresAuth(AppExceptionCase):
         def __init__(self, context: dict = None):
             """
