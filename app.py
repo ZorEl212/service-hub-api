@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import models
+from models import auth
 from routers import user
 from utils.exceptions import AppExceptionCase, app_exception_handler
 from utils.request_exceptions import (
@@ -27,6 +28,10 @@ async def custom_validation_exception_handler(request, e):
 async def custom_app_exception_handler(request, e):
     return await app_exception_handler(request, e)
 
+# Auth routes
+app.include_router(auth.get_auth_router(), prefix="/auth/jwt", tags=["auth"])
+app.include_router(auth.get_register_router(), prefix="/auth", tags=["auth"])
+app.include_router(auth.get_users_router(), prefix="/users", tags=["users"])
 
 app.include_router(user.router)
 
