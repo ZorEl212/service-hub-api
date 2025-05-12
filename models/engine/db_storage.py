@@ -1,13 +1,18 @@
-from typing import Type, Union
+from typing import Optional, Type, Union
 from beanie import Document, PydanticObjectId
 import motor.motor_asyncio
 from fastapi_users.db import BeanieUserDatabase
 
+from models.customer import Customer
 from models.engine.interface import AbstractStorageEngine
+from models.service import Service, ServiceItem
+from models.service_provider import Address, Certification, Insurance, ServiceProvider
 # Example class registry (like your `classes`)
 from models.user import User
 
-classes = {"User": User}
+classes = {"User": User, "ServiceProvider": ServiceProvider, "Customer": Customer,
+           "Address": Address, "Certification": Certification, "Insurance": Insurance,
+           "Service": Service, "ServiceItem": ServiceItem}  # Add other models as needed
 
 class DBStorage(AbstractStorageEngine):
     """Implements the same interface as FileStorage but using Beanie ODM"""
