@@ -5,6 +5,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import models
 from models import auth
 from routers import user
+from routers import provider
 from utils.exceptions import AppExceptionCase, app_exception_handler
 from utils.request_exceptions import (
     http_exception_handler,
@@ -34,6 +35,8 @@ app.include_router(auth.get_register_router(), prefix="/auth", tags=["auth"])
 app.include_router(auth.get_users_router(), prefix="/users", tags=["users"])
 
 app.include_router(user.router)
+
+app.include_router(provider.router)
 
 
 @app.on_event("startup")
