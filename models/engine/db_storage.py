@@ -52,7 +52,7 @@ class DBStorage(AbstractStorageEngine):
         """Deletes an object from DB"""
         await obj.delete()
 
-    async def get(self, cls: Type[Document] | str, obj_id: str):
+    async def get(self, cls: Type[Document] | str, obj_id: PydanticObjectId):
         """Get document by class and id"""
         if isinstance(cls, str) and not classes.get(cls):
             return None
