@@ -37,7 +37,7 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
 class Auth:
     def __init__(self):
         self.secret = SECRET
-        self.transport = BearerTransport(tokenUrl="auth/jwt/login")
+        self.transport = BearerTransport(tokenUrl="auth/login")
         self.backend = AuthenticationBackend(
             name="jwt",
             transport=self.transport,
@@ -58,7 +58,7 @@ class Auth:
         return JWTStrategy(secret=self.secret, lifetime_seconds=3600)
 
     def get_auth_router(self):
-        return self.fastapi_users.get_auth_router(self.backend)
+        return self.auth_routes.get_auth_router(self.backend, self.fastapi_users.get_user_manager, self.fastapi_users.authenticator, False)
 
     def get_register_router(self):
         return self.auth_routes.get_register_router(self.fastapi_users.get_user_manager, UserRead, UserCreate)
