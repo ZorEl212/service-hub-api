@@ -57,3 +57,11 @@ class AppException(object):
             """
             status_code = 401
             AppExceptionCase.__init__(self, status_code, context)
+
+    @classmethod
+    def Forbidden(cls, param):
+        pass
+
+    @classmethod
+    def NotFound(cls, param):
+        pass
