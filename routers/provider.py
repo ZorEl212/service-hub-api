@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi_users import schemas
 
 from models import auth, storage
 from models.engine.file_storage import FileStorage
 from schemas.service_provider import ServiceProviderCreate, ServiceProvider
 from models.service_provider import ServiceProvider as ServiceProviderModel
-from services.user import UserCRUD
-
+from services.service import CategoryCRUD
 
 router = APIRouter(
     prefix="/provider",
@@ -18,10 +20,23 @@ async def get_me(user: ServiceProviderModel = Depends(auth.current_user)):
     """
     Get the current user.
     """
-    print(user.dict())
     details = await storage.get_by_reference(ServiceProviderModel, "user_id", user.id)
-    print(details)
     if details:
+        details.user_id = user.id
+        return details
+    return None
+
+@router.put("/profile", response_model=ServiceProvider)
+async def update_profile(provider_data: ServiceProviderUpdate,
+    user: ServiceProviderModel = Depends(auth.current_user)
+
+):
+    """
+    Update the current user's profile.
+    """
+    details: ServiceProviderModel = await storage.get_by_reference(ServiceProviderModel, "user_id", user.id)
+    if details:
+        await details.set(provider_data.model_dump())
         details.user_id = user.id
         return details
     return None
