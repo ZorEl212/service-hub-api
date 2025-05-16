@@ -5,14 +5,7 @@ from beanie import Document
 from models.base_model import BaseModel
 from models.service import Service
 from models.user import User
-
-
-class Address(Document):
-    street: str
-    city: str
-    state: str
-    zip: str
-    location: Dict
+from models.attributes import Address
 
 
 class Certification(BaseModel):
@@ -34,13 +27,13 @@ class Insurance(BaseModel):
         collection = "insurances"
 
 
-class ServiceProvider(Document):
+class ServiceProvider(BaseModel):
     user_id: Optional[Link[User]] = None
     name: str
     description: str
     categories: List[str]
     image: Optional[str] = None
-    address: Optional[Link[Address]] = None
+    address: Optional[Address] = None
     phone: str
     website: Optional[str] = None
     hours: Optional[List[dict]] = None
@@ -49,7 +42,6 @@ class ServiceProvider(Document):
     insurance: Optional[Link[Insurance]] = None
     licenseNumber: Optional[str] = None
     verified: Optional[bool] = None
-    services: Optional[List[Link[Service]]] = None
     images: Optional[List[dict]] = None
     included: Optional[List[str]] = None
     excluded: Optional[List[str]] = None
