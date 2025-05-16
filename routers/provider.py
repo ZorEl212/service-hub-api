@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi_users import schemas
 
 from models import auth, storage
-from models.engine.file_storage import FileStorage
-from schemas.service_provider import ServiceProviderCreate, ServiceProvider
+from models.service import Service
+from models.user import User
+from schemas.service import CategoryCreate, CategoryRead
+from schemas.service_provider import ServiceProvider, ServiceProviderUpdate
 from models.service_provider import ServiceProvider as ServiceProviderModel
 from services.service import CategoryCRUD
 
