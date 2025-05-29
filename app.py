@@ -16,6 +16,7 @@ from utils.request_exceptions import (
 origins = [
     "http://localhost",
     "http://localhost:3000",
+    "http://localhost:5500",
 ]
 
 dotenv.load_dotenv(".env")
