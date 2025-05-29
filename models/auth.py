@@ -66,6 +66,18 @@ class Auth:
         self.current_active_user = self.fastapi_users.current_user(active=True)
         self.current_superuser = self.fastapi_users.current_user(superuser=True)
 
+    async def get_user_from_cookie(self, websocket: WebSocket, user_manager: BaseUserManager):
+        cookie_value = websocket.cookies.get(self.cookie_transport.cookie_name)
+        if not cookie_value:
+            return None
+        try:
+            # Validate and get user using FastAPI Users token logic
+            user = await self.cookie_backend.get_strategy().read_token(cookie_value, user_manager)
+            return await user_manager.get(user.id)
+        except Exception as e:
+            print_exc()
+            return None
+
     def get_jwt_strategy(self) -> JWTStrategy:
         return JWTStrategy(secret=self.secret, lifetime_seconds=3600)
 
