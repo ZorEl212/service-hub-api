@@ -4,10 +4,11 @@ from urllib.request import Request
 
 from beanie import PydanticObjectId
 from fastapi import Depends
-from fastapi_users.authentication import BearerTransport, JWTStrategy, AuthenticationBackend
+from fastapi_users.authentication import BearerTransport, CookieTransport, JWTStrategy, AuthenticationBackend
 from fastapi_users_db_beanie import BeanieUserDatabase, ObjectIDIDMixin
+from starlette.websockets import WebSocket
 
-from models import storage
+from models import email_client, storage
 from routers.auth import AuthRoutes
 from schemas.user import UserCreate, User as UserRead, UserUpdate
 from models.user import User
