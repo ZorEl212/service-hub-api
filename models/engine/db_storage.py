@@ -1,20 +1,25 @@
-from typing import Optional, Type, Union
+import asyncio
+from typing import List, Optional, Type, Union
 from beanie import Document, PydanticObjectId
 import motor.motor_asyncio
+from beanie.odm.operators.find.comparison import In
 from fastapi_users.db import BeanieUserDatabase
 
 from models.appointment import Appointment
 from models.customer import Customer
 from models.engine.interface import AbstractStorageEngine
-from models.service import Service, ServiceItem
-from models.service_provider import Address, Certification, Insurance, ServiceProvider
+from models.message import Message
+from models.review import Review
+from models.service import Category, ServiceItem
+from models.service_provider import Certification, Insurance, ServiceProvider
 # Example class registry (like your `classes`)
 from models.user import User
+from models.elastic.es_schema import ServiceProviderSearchDoc
 
 classes = {"User": User, "ServiceProvider": ServiceProvider, "Customer": Customer,
             "Certification": Certification, "Insurance": Insurance,
-           "Service": Service, "ServiceItem": ServiceItem,
-           "Appointment": Appointment}  # Add other models as needed
+           "Category": Category, "ServiceItem": ServiceItem,
+           "Appointment": Appointment, "Review": Review, "Message": Message}  # Add other models as needed
 
 class DBStorage(AbstractStorageEngine):
     """Implements the same interface as FileStorage but using Beanie ODM"""
@@ -42,8 +47,12 @@ class DBStorage(AbstractStorageEngine):
         """Add (or update) an object in DB"""
         await obj.create()
 
+    async def update(self, obj: Document):
+        """Update a document"""
+        await obj.replace()
+
     async def save(self):
-        """No-op for Beanie since objects save themselves"""
+        """there is no op save method for beannie"""
         pass
 
     async def reload(self):
@@ -52,13 +61,34 @@ class DBStorage(AbstractStorageEngine):
 
     async def delete(self, obj: Document):
         """Deletes an object from DB"""
-        await obj.delete()
+        return await obj.delete()
 
-    async def get(self, cls: Type[Document] | str, obj_id: PydanticObjectId):
-        """Get document by class and id"""
-        if isinstance(cls, str) and not classes.get(cls):
-            return None
-        return await classes.get(cls).get(obj_id) if isinstance(cls, str) else await cls.get(obj_id)
+    async def delete_by_filter(
+            self,
+            cls: Type[Document],
+            field,
+            values: list,
+    ):
+        """Delete all documents where a given field is in values"""
+        query = In(field, values)
+        return await cls.find(query).delete()
+
+    async def batch_save(self, cls: Type[Document], objects: list[Document]):
+        """Saves a list of objects to the database"""
+        return await cls.insert_many(objects)
+
+    async def batch_update(self, objects: list[Document]):
+        """
+        Concurrently update a list of documents in the database.
+        """
+        return await asyncio.gather(*(obj.replace() for obj in objects))
+
+    async def get(self, cls: Type[Document] | str, obj_id: PydanticObjectId, fetch_links: bool = False):
+                """Get document by class and id"""
+                if isinstance(cls, str) and not classes.get(cls):
+                    return None
+                model = classes.get(cls) if isinstance(cls, str) else cls
+                return await model.get(obj_id, fetch_links=fetch_links)
 
     async def count(self, cls: Type[Document] = None):
         """Count number of documents, optionally by class"""
@@ -84,8 +114,8 @@ class DBStorage(AbstractStorageEngine):
             cls: Type[Document],
             reference_field: str,
             reference_id: Union[str, PydanticObjectId],
-            fetch_links: bool = False
-    ) -> Optional[Document]:
+            fetch_links: bool = False, batch: bool = False
+    ) -> Optional[Document] or list[Document]:
         """Get document by a reference (Link) field like `user_id`.
 
         :param cls: The document class to query (e.g., Customer)
@@ -94,6 +124,7 @@ class DBStorage(AbstractStorageEngine):
         :param fetch_links: Whether to resolve linked documents
         :return: The first matching document or None
         """
+        cls = classes.get(cls) if isinstance(cls, str) else cls
         if isinstance(reference_id, str):
             reference_id = PydanticObjectId(reference_id)
 
