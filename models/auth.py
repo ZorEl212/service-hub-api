@@ -1,3 +1,4 @@
+from traceback import print_exc
 from typing import Optional
 from urllib.request import Request
 
@@ -32,6 +33,7 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
         self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
+        await email_client.send_verification_email(user.email, token)
 
 
 class Auth:
