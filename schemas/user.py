@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Optional
 
-from pydantic import EmailStr, Field, StringConstraints
+from pydantic import EmailStr, Field, StringConstraints, model_validator
 from fastapi_users import schemas
 
 from schemas.base_model import BaseAPIModel
@@ -33,6 +33,3 @@ class User(BaseAPIModel):
 class UserUpdate(schemas.BaseUserUpdate):
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(default=None, min_length=6)
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    username: Optional[str] = None
