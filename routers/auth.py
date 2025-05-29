@@ -148,7 +148,7 @@ class AuthRoutes:
             await user_manager.on_after_login(user, request, response)
 
             # Append user role to the response body if available
-            if hasattr(user, "role"):
+            if hasattr(user, "role") and backend.name != "cookie":
                 body_data = json.loads(response.body)
                 body_data["role"] = user.role
                 response.body = json.dumps(body_data).encode("utf-8")
