@@ -6,6 +6,13 @@ storage = DBStorage()
 media_storage = MediaStorage()
 es = ElasticSearchConfig()
 
+from models.engine.auth import AuthEngine as VerificationAuth, AuthEngine
+from models.engine.email_client import EmailClient
+
+email_client = EmailClient()
 from models.auth import Auth
 
 auth = Auth()
+sms_auth = AuthEngine()
+
+
