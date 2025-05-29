@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from beanie import Document, Link
 from pydantic import BaseModel as PydanticModel
@@ -7,6 +7,7 @@ from pydantic import BaseModel as PydanticModel
 from models.service import ServiceItem
 from models.user import User
 from models.attributes import Address
+from schemas.customer import CustomerRead
 
 
 class History(PydanticModel):
@@ -18,11 +19,17 @@ class History(PydanticModel):
 
 class Customer(Document):
     user_id: Link[User]
-    first_name: str = ""
-    last_name: str = ""
-    username: str = ""
-    address: Address
-    saved_services: List[Link[ServiceItem]] = []
+    full_name: str = ""
+    address: Optional[Address] = None
+    saved_providers: List[Link[ServiceItem]] = []
     history: List[History] = []
 
-
+    async def to_read_model(self) -> CustomerRead:
+        await self.fetch_all_links()
+        return CustomerRead(
+            id=self.id,
+            user_id=self.user_id.id,
+            email=self.user_id.email,
+            full_name=self.full_name,
+            address=self.address
+        )
