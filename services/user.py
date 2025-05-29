@@ -1,3 +1,4 @@
+import traceback
 from traceback import print_exception
 
 from models.user import User
@@ -32,7 +33,7 @@ class UserCRUD(AppCRUD):
                     return ServiceResult(AppException.BadRequest())
 
                 customer_profile = Customer(
-                    user_id=user
+                    user_id=user.id,
                     **user_data.customer_profile.model_dump(mode="python")
                 )
                 await customer_profile.insert()
@@ -42,7 +43,7 @@ class UserCRUD(AppCRUD):
                     return ServiceResult(AppException.BadRequest())
 
                 provider_profile = ServiceProvider(
-                    user_id=user,
+                    user_id=user.id,
                     **user_data.provider_profile.model_dump(mode="python")
                 )
                 await provider_profile.insert()
@@ -50,5 +51,5 @@ class UserCRUD(AppCRUD):
             return ServiceResult(user)
 
         except Exception as e:
-            print_exception(*e.args)
+            traceback.print_exc()
             return ServiceResult(AppException.CreateItem())
