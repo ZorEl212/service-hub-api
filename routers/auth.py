@@ -177,5 +177,26 @@ class AuthRoutes:
             user, token = user_token
             return await backend.logout(strategy, user, token)
 
+        @router.post(
+            "/check-password", name=f"auth:{backend.name}.check_password"
+        )
+        async def check_password(
+            password: str,
+            user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
+            user: models.UP = Depends(authenticator.current_user(verified=True))
+        ):
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST)
+            oauth2form = OAuth2PasswordRequestForm(grant_type="password", username=user.email, password=password)
+            result = await user_manager.authenticate(oauth2form)
+
+            if not result:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid password"
+                )
+            print(f"Password: {password}")
+            return {"detail": "Password is valid"}
         return router
 
