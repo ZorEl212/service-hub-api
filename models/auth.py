@@ -98,6 +98,8 @@ class Auth:
 
     def get_users_router(self):
         return self.fastapi_users.get_users_router(UserRead, UserUpdate)
+    def get_reset_password_router(self):
+        return self.fastapi_users.get_reset_password_router()
 
     async def get_user_manager(self, user_db: BeanieUserDatabase = Depends(storage.get_user_db)):
         yield UserManager(user_db)
