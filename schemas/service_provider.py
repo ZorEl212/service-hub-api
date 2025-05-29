@@ -5,6 +5,7 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel, EmailStr
 from pydantic.types import StringConstraints
 
+from models.attributes import BusinessCategory, Subcategory
 from models.service_provider import Address
 from schemas.base_model import BaseAPIModel
 
@@ -12,8 +13,7 @@ class ServiceProvider(BaseModel):
         user_id: PydanticObjectId
         name: str
         description: str
-        categories: List[str]
-        image: Optional[str]
+        category: Dict[BusinessCategory, List[Subcategory]]
         address: Optional[Address]
         phone: str
         website: Optional[str]
@@ -40,7 +40,7 @@ class ServiceProviderCreate(BaseModel):
     name: Annotated[str, StringConstraints(min_length=2, max_length=100)]
     phone: Annotated[str, StringConstraints(min_length=10, max_length=15)]
     website: Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^https?://.*")] | None
-    categories: List[str]
+    category: Dict[BusinessCategory, List[Subcategory]]
 
 class ServiceProviderUpdate(BaseModel):
     name: Optional[str]
