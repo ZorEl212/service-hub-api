@@ -37,28 +37,43 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
 class Auth:
     def __init__(self):
         self.secret = SECRET
-        self.transport = BearerTransport(tokenUrl="auth/login")
-        self.backend = AuthenticationBackend(
+        self.bearer_transport = BearerTransport(tokenUrl="auth/login")
+
+        self.cookie_transport = CookieTransport(
+            cookie_name="auth_cookie",
+            cookie_max_age=3600,  # in seconds
+            cookie_samesite="lax",  # Adjust as needed
+        )
+        self.bearer_backend = AuthenticationBackend(
             name="jwt",
-            transport=self.transport,
+            transport=self.bearer_transport,
             get_strategy=self.get_jwt_strategy,
         )
 
+        self.cookie_backend = AuthenticationBackend(
+            name="cookie",
+            transport=self.cookie_transport,
+            get_strategy=self.get_jwt_strategy
+        )
         self.fastapi_users = FastAPIUsers[User, PydanticObjectId](
             self.get_user_manager,
-            [self.backend],
+            [self.bearer_backend, self.cookie_backend],
         )
         self.auth_routes = AuthRoutes()
 
         self.current_user = self.fastapi_users.current_user()
+        self.optional_current_user = self.fastapi_users.current_user(optional=True)
         self.current_active_user = self.fastapi_users.current_user(active=True)
         self.current_superuser = self.fastapi_users.current_user(superuser=True)
 
     def get_jwt_strategy(self) -> JWTStrategy:
         return JWTStrategy(secret=self.secret, lifetime_seconds=3600)
 
-    def get_auth_router(self):
-        return self.auth_routes.get_auth_router(self.backend, self.fastapi_users.get_user_manager, self.fastapi_users.authenticator, False)
+    def get_bearer_auth_router(self):
+        return self.auth_routes.get_auth_router(self.bearer_backend, self.fastapi_users.get_user_manager, self.fastapi_users.authenticator, False)
+
+    def get_cookie_auth_router(self):
+        return self.auth_routes.get_auth_router(self.cookie_backend, self.fastapi_users.get_user_manager, self.fastapi_users.authenticator, False)
 
     def get_register_router(self):
         return self.auth_routes.get_register_router(self.fastapi_users.get_user_manager, UserRead, UserCreate)
