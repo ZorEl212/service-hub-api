@@ -3,15 +3,15 @@ from starlette.responses import JSONResponse
 
 
 class AppExceptionCase(Exception):
-    def __init__(self, status_code: int, context: dict):
+    def __init__(self, status_code: int, context: dict = None):
         self.exception_case = self.__class__.__name__
         self.status_code = status_code
-        self.context = context
+        self.context = context or {}
 
     def __str__(self):
         return (
             f"<AppException {self.exception_case} - "
-            + f"status_code={self.status_code} - context={self.context}>"
+            f"status_code={self.status_code} - context={self.context}>"
         )
 
 
@@ -25,43 +25,66 @@ async def app_exception_handler(request: Request, exc: AppExceptionCase):
     )
 
 
-class AppException(object):
+class AppException(Exception):
+    """Base exception class for application-specific exceptions"""
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return self.message
+
+
+class AppException:
     class CreateItem(AppExceptionCase):
         def __init__(self, context: dict = None):
-            """
-            Item creation failed
-            """
-            status_code = 500
-            AppExceptionCase.__init__(self, status_code, context)
+            super().__init__(status_code=500, context=context)
 
     class GetItem(AppExceptionCase):
         def __init__(self, context: dict = None):
-            """
-            Item not found
-            """
-            status_code = 404
-            AppExceptionCase.__init__(self, status_code, context)
+            super().__init__(status_code=404, context=context)
 
     class BadRequest(AppExceptionCase):
         def __init__(self, context: dict = None):
-            """
-            Bad request
-            """
-            status_code = 400
-            AppExceptionCase.__init__(self, status_code, context)
+            super().__init__(status_code=400, context=context)
 
     class ItemRequiresAuth(AppExceptionCase):
         def __init__(self, context: dict = None):
-            """
-            Item is not public and requires auth
-            """
-            status_code = 401
-            AppExceptionCase.__init__(self, status_code, context)
+            super().__init__(status_code=401, context=context)
 
-    @classmethod
-    def Forbidden(cls, param):
-        pass
+    class Unauthorized(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=401, context=context)
 
-    @classmethod
-    def NotFound(cls, param):
-        pass
+    class Forbidden(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=403, context=context)
+
+    class NotFound(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=404, context=context)
+
+    class UpdateItem(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=500, context=context)
+
+    class DeleteItem(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=500, context=context)
+
+    class InvalidPhoneNumber(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=400, context=context)
+
+    class SMSVerificationRequestFailed(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=500, context=context)
+
+    class SMSVerificationFailed(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=401, context=context)
+
+    class PhoneAlreadyRegistered(AppExceptionCase):
+        def __init__(self, context: dict = None):
+            super().__init__(status_code=409, context=context)
