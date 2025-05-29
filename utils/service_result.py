@@ -8,7 +8,7 @@ class ServiceResult(object):
     def __init__(self, arg):
         if isinstance(arg, AppExceptionCase):
             self.success = False
-            self.exception_case = arg.exception_case
+            self.exception_case = arg
             self.status_code = arg.status_code
         else:
             self.success = True
