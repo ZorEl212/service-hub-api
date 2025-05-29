@@ -13,6 +13,19 @@ class UserCreate(schemas.BaseUserCreate):
     customer_profile: Optional[CustomerCreate] = None
     provider_profile: Optional[ServiceProviderCreate] = None
 
+    @model_validator(mode="before")
+    def validate_profiles(self) -> 'UserCreate':
+        if self["role"] == "customer":
+            if self.get("customer_profile") is None:
+                raise ValueError("customer_profile is required when role is 'customer'")
+            self["provider_profile"] = None  # ignore if provided
+        elif self.get("role") == "provider":
+            if self.get("provider_profile") is None:
+                raise ValueError("provider_profile is required when role is 'provider'")
+            self["customer_profile"] = None  # ignore if provided
+        print(f"type: {type(self)}, data: {self}")
+        return self
+
 class User(BaseAPIModel):
     email: EmailStr
     role: Literal["customer", "provider"]
