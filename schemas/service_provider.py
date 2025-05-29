@@ -1,16 +1,19 @@
-from typing import List, Optional, Annotated
+from typing import Any, Dict, List, Optional, Annotated
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from pydantic.types import StringConstraints
 
 from models.attributes import BusinessCategory, Subcategory
 from models.service_provider import Address
-from schemas.base_model import BaseAPIModel
+
 
 class ServiceProvider(BaseModel):
+        id: PydanticObjectId
         user_id: PydanticObjectId
+        email: EmailStr
+        email_verified: bool
         name: str
         description: str
         category: Dict[BusinessCategory, List[Subcategory]]
@@ -23,7 +26,7 @@ class ServiceProvider(BaseModel):
         insurance: Optional[UUID]
         licenseNumber: Optional[str]
         verified: Optional[bool]
-        images: Optional[List[dict]]
+        profile_picture: Optional[str]
         included: Optional[List[str]]
         excluded: Optional[List[str]]
         process: Optional[List[dict]]
@@ -33,7 +36,7 @@ class ServiceProvider(BaseModel):
         availability: Optional[List[dict]]
         serviceRadius: Optional[str]
         serviceArea: Optional[str]
-        serviceTypes: Optional[List[str]]
+        averageRating: Optional[float]
 
 class ServiceProviderCreate(BaseModel):
     description: Annotated[str, StringConstraints(min_length=10, max_length=1000)]
@@ -47,7 +50,6 @@ class ServiceProviderUpdate(BaseModel):
     description: Optional[str]
     phone: Optional[str]
     website: Optional[str]
-    categories: Optional[List[str]]
     address: Optional[Address]
     hours: Optional[List[dict]]
     establishedYear: Optional[int]
@@ -55,7 +57,6 @@ class ServiceProviderUpdate(BaseModel):
     insurance: Optional[UUID]
     licenseNumber: Optional[str]
     verified: Optional[bool]
-    images: Optional[List[dict]]
     included: Optional[List[str]]
     excluded: Optional[List[str]]
     process: Optional[List[dict]]
@@ -63,4 +64,47 @@ class ServiceProviderUpdate(BaseModel):
     guarantees: Optional[List[dict]]
     faqs: Optional[List[dict]]
 
+class PublicServiceProviderRead(BaseModel):
+    id: PydanticObjectId
+    email: EmailStr
+    name: str
+    description: str
+    category: Dict[BusinessCategory, List[Subcategory]]
+    address: Optional[Address]
+    phone: str
+    website: Optional[str]
+    hours: Optional[List[dict]]
+    establishedYear: Optional[int]
+    certifications: Optional[List[str]]
+    insurance: Optional[str]
+    licenseNumber: Optional[str]
+    verified: Optional[bool]
+    included: Optional[List[str]]
+    excluded: Optional[List[str]]
+    process: Optional[List[dict]]
+    highlights: Optional[List[dict]]
+    guarantees: Optional[List[dict]]
+    establishedYear: Optional[int]
+    profile_picture: Optional[str]
+    faqs: Optional[List[dict]]
+    averageRating: Optional[float] = None
+
+    @classmethod
+    @model_validator(mode="before")
+    def parse_inputs(cls, data: dict[str, Any]) -> dict[str, Any]:
+        if data.get("certifications") is not None:
+            data["certifications"] = [
+                str(cert.name) if not isinstance(cert, str) else cert
+                for cert in data.get("certifications", [])
+            ]
+        if data.get("insurance") is not None:
+            insurance = data["insurance"]
+            data["insurance"] = (
+                str(insurance.provider) if not isinstance(insurance, str) else insurance
+            )
+        return data
+
+    class Config:
+        orm_mode = True  # Enables compatibility with ORM models
+        extra = "ignore"  # Ignore extra fields not defined in the model
 
