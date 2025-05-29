@@ -19,10 +19,13 @@ class BaseModel(Document):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    async def save(self):
+    async def _save(self):
         self.updated_at = datetime.utcnow()
         await models.storage.new(self)
-        await models.storage.save()
+
+    async  def update_self(self):
+        self.updated_at = datetime.utcnow()
+        await models.storage.update(self)
 
     def update_from_dict(self, data: dict):
         """
@@ -32,9 +35,8 @@ class BaseModel(Document):
             if hasattr(self, key):
                 setattr(self, key, value)
 
-    async def delete(self):
-        await models.storage.delete(self)
-        await models.storage.save()
+    async def delete_obj(self):
+        return await models.storage.delete(self)
 
     async def to_dict(self):
         return jsonable_encoder(self.model_dump())
