@@ -1,11 +1,11 @@
 from typing import Dict, List, Optional
 
 from beanie import Link
-
+from pydantic import field_validator
 import models
 from models.base_model import BaseModel
 from models.user import User
-from models.attributes import Address, BusinessCategory, Subcategory
+from models.attributes import ALLOWED_SUBCATEGORIES, Address, BusinessCategory, Subcategory
 from schemas.service_provider import ServiceProvider as ServiceProviderRead
 
 
@@ -54,6 +54,19 @@ class ServiceProvider(BaseModel):
     serviceArea: Optional[str] = None
     averageRating: Optional[float] = None
     reviewCount: Optional[int] = None
+
+    @classmethod
+    @field_validator("category")
+    def validate_category(cls, value: Dict[BusinessCategory, List[Subcategory]]):
+        for category, subcategories in value.items():
+            allowed = ALLOWED_SUBCATEGORIES.get(category, [])
+            for sub in subcategories:
+                if sub not in allowed:
+                    raise ValueError(
+                        f"Subcategory '{sub}' is not allowed under category '{category}'. "
+                        f"Allowed: {[s.value for s in allowed]}"
+                    )
+        return value
 
     async def to_read_model(self) -> ServiceProviderRead:
         await self.fetch_all_links()
