@@ -6,11 +6,13 @@ from beanie import Link
 from models.base_model import BaseModel
 from models.customer import Customer
 from models.service import ServiceItem
+from models.service_provider import ServiceProvider
 from models.user import User
 
 
 class Review(BaseModel):
     service_id: Link[ServiceItem]
+    provider_id: Link[ServiceProvider]
     user_id: Link[Customer]
     rating: float  # 1-5 stars
     message: str
