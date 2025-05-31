@@ -6,6 +6,7 @@ from beanie.odm.operators.find.comparison import In
 from fastapi_users.db import BeanieUserDatabase
 
 from models.appointment import Appointment
+from models.attributes import BusinessCategory, Subcategory
 from models.customer import Customer
 from models.engine.interface import AbstractStorageEngine
 from models.message import Message
@@ -137,14 +138,16 @@ class DBStorage(AbstractStorageEngine):
         service_items = await ServiceItem.find(ServiceItem.provider_id.id == provider.id).to_list()
         categories = await Category.find(Category.provider_id.id == provider.id).to_list()
 
+        category: BusinessCategory = next(iter(provider.category), None)
+        subcategories: List[Subcategory] = provider.category.get(category, []) if category else []
+
         doc = ServiceProviderSearchDoc(
             id=str(provider.id),
             name=provider.name,
             description=provider.description,
             phone=provider.phone,
-            category_text=" ".join(
-                [k.value + " " + " ".join([v.value for v in vs]) for k, vs in provider.category.items()]
-            ) if provider.category else "",
+            category=category,
+            subcategories=subcategories,
             service_titles=[s.title for s in service_items],
             service_descriptions=[s.description for s in service_items],
             category_titles=[c.title for c in categories],
