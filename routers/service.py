@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, Form, Query
 
 from models import auth
 from models.user import User
-from schemas.service import ServiceItemCreate, ServiceItemRead, ServiceItemUpdate
+from schemas.service import PublicServiceItemRead, ServiceItemCreate, ServiceItemRead, ServiceItemUpdate
 from services.service import ServiceItemCRUD
 
 router = APIRouter(
@@ -53,7 +53,6 @@ async def get_services(user: User = Depends(auth.current_user)):
         return result.value
     return result.exception_case
 
-
 @router.get("/{service_id}", response_model=ServiceItemRead)
 async def get_service(service_id: str, user: User = Depends(auth.current_user)):
     """
@@ -92,6 +91,15 @@ async def update_service(service_id: str, title: Annotated[str, Form()],
         return result.value
     return result.exception_case
 
+@router.get("/public/{provider_id}", response_model=List[PublicServiceItemRead])
+async def get_public_services(provider_id: str):
+    """
+    Get public service items for a service provider.
+    """
+    result = await ServiceItemCRUD().get_all_public(provider_id)
+    if result.success:
+        return result.value
+    raise result.exception_case
 
 @router.delete("/{service_id}")
 async def delete_service(service_id: str, user: User = Depends(auth.current_user)):
