@@ -30,6 +30,19 @@ async def create_review(
     print("Failed")
     raise result.exception_case
 
+@router.get("{provider_id}", response_model=dict)
+async def get_provider_reviews(
+    provider_id: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=50),
+    user: User = Depends(auth.optional_current_user),
+):
+    result = await ReviewCRUD().get_by_provider(
+        provider_id=provider_id, page=page, limit=limit
+    )
+    if result.success:
+        return result.value
+    return result.exception_case
 
 @router.get("/service/{service_id}", response_model=dict)
 async def get_service_reviews(
@@ -44,7 +57,6 @@ async def get_service_reviews(
     if result.success:
         return result.value
     return result.exception_case
-
 
 @router.put("/{review_id}", response_model=ReviewRead)
 async def update_review(
