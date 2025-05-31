@@ -44,10 +44,12 @@ class SearchEngine:
         try:
             candidate_provider_ids: Optional[Set[PydanticObjectId]] = None
             id_selection_filter_applied = False
+            providers: List[ServiceProvider] = []
 
             if filters.q or filters.category:
-                es_ids = await models.es.search_providers(filters.q, filters.category)
-                print(es_ids)
+                if filters.category and not filters.subcategory:
+                    filters.subcategory = ALLOWED_SUBCATEGORIES.get(filters.category)
+                es_ids = await models.es.search_providers(filters.q, filters.category, filters.subcategory)
                 candidate_provider_ids = set(PydanticObjectId(id) for id in es_ids)
                 id_selection_filter_applied = True
                 if not candidate_provider_ids:
