@@ -4,6 +4,7 @@ from typing import List, Optional, Set
 from beanie import PydanticObjectId
 
 import models
+from models.attributes import ALLOWED_SUBCATEGORIES
 from models.service import ServiceItem
 from models.service_provider import ServiceProvider
 from schemas.generic_schemas import SearchFilters
@@ -89,15 +90,49 @@ class SearchEngine:
             sort_order = self._get_sort_order(filters.sort, fallback=not id_selection_filter_applied)
 
             skip = (filters.page - 1) * filters.limit
-            providers, total = await models.storage.find_with_count(
-                cls=ServiceProvider,
-                filter_=provider_filter,
-                sort=sort_order,
-                skip=skip,
-                limit=filters.limit,
-                fetch_links=False
-            )
-            print(f"Provider: {provider_filter}")
+
+            if filters.location:
+                try:
+                    long, lat = map(float, filters.location.split(","))
+                    geo_near_stage = {
+                        "$geoNear": {
+                            "near": {
+                                "type": "Point",
+                                "coordinates": [long, lat]
+                            },
+                            "distanceField": "distance",
+                            "spherical": True,
+                            "query": provider_filter
+                        }
+                    }
+
+                    # Only add maxDistance if filters.distance is set and > 100
+                    if filters.distance and filters.distance > 100:
+                        geo_near_stage["$geoNear"]["maxDistance"] = filters.distance
+
+                    geo_pipeline = [
+                        geo_near_stage,
+                        {"$sort": dict(sort_order)},
+                        {"$skip": skip},
+                        {"$limit": filters.limit}
+                    ]
+                    raw_results = await ServiceProvider.get_motor_collection().aggregate(geo_pipeline).to_list(length=None)
+                    total = len(raw_results)
+                    providers = [ServiceProvider.model_validate(doc) for doc in raw_results]
+                except ValueError:
+                    # Invalid long/lat
+                    print_exc()
+                    return ServiceResult(AppException.GetItem())
+            else:
+                # Fallback: standard query
+                providers, total = await models.storage.find_with_count(
+                    cls=ServiceProvider,
+                    filter_=provider_filter,
+                    sort=sort_order,
+                    skip=skip,
+                    limit=filters.limit,
+                    fetch_links=False
+                )
 
             return ServiceResult({
                 "page": filters.page,
