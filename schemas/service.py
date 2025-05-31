@@ -33,6 +33,16 @@ class CategoryRead(PydanticModel):
     class Config:
         orm_mode = True  # Enables compatibility with ORM models
 
+class PublicCategoryRead(PydanticModel):
+    id: PydanticObjectId
+    title: str
+    description: str
+    serviceTypes: List[str]
+
+    class Config:
+        from_attributes = True  # Enables compatibility with ORM models
+        extra = "ignore"  # Ignore extra fields not defined in the model
+
 class CategorySync(PydanticModel):
     created: List[CategoryCreate]
     updated: List[CategoryCreate]
@@ -73,6 +83,21 @@ class ServiceItemRead(PydanticModel):
     class Config:
         orm_mode = True  # Enables compatibility with ORM models
 
+class PublicServiceItemRead(PydanticModel):
+    id: PydanticObjectId
+    title: str
+    description: str
+    category_id: PydanticObjectId
+    price: float
+    status: str
+    image_urls: Optional[Dict[UUID, Dict[str, str | bool]]]
+    featured: bool
+    rating: float
+    reviewCount: int
+
+    class Config:
+        from_attributes = True  # Enables compatibility with ORM models
+        extra = "ignore"  # Ignore extra fields not defined in the model
 
 class ServiceItemProviderProjection(BaseModel):
     provider_id: PydanticObjectId
