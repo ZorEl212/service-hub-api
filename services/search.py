@@ -56,7 +56,6 @@ class SearchEngine:
                     return self._empty_result(filters)
 
             service_item_filter = {}
-
             if filters.price_min is not None:
                 id_selection_filter_applied = True
                 service_item_filter.setdefault("price", {})["$gte"] = filters.price_min
@@ -67,7 +66,6 @@ class SearchEngine:
             if service_item_filter:
                 service_items = await ServiceItem.find(service_item_filter, fetch_links=True).to_list()
                 provider_ids_from_services = {PydanticObjectId(s.provider_id.id) for s in service_items}
-
                 if candidate_provider_ids is not None:
                     candidate_provider_ids.intersection_update(provider_ids_from_services)
                     if not candidate_provider_ids:
@@ -78,19 +76,15 @@ class SearchEngine:
                         return self._empty_result(filters)
 
             provider_filter = {}
-
             if candidate_provider_ids is not None:
                 provider_filter["_id"] = {"$in": list(candidate_provider_ids)}
             elif id_selection_filter_applied:
                 return self._empty_result(filters)
 
-            if filters.location:
-                provider_filter["address.city"] = {"$regex": filters.location, "$options": "i"}
             if filters.rating is not None and filters.rating > 0.0:
-                provider_filter["rating"] = {"$gte": filters.rating}
+                provider_filter["averageRating"] = {"$gte": filters.rating}
 
             sort_order = self._get_sort_order(filters.sort, fallback=not id_selection_filter_applied)
-
             skip = (filters.page - 1) * filters.limit
 
             if filters.location:
