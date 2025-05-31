@@ -37,6 +37,7 @@ class ServiceProvider(BaseModel):
         serviceRadius: Optional[str]
         serviceArea: Optional[str]
         averageRating: Optional[float]
+        reviewCount: Optional[int] = None
 
 class ServiceProviderCreate(BaseModel):
     description: Annotated[str, StringConstraints(min_length=10, max_length=1000)]
@@ -87,6 +88,8 @@ class PublicServiceProviderRead(BaseModel):
     establishedYear: Optional[int]
     profile_picture: Optional[str]
     faqs: Optional[List[dict]]
+    reviewCount: Optional[int] = None
+    serviceArea: Optional[str] = None
     averageRating: Optional[float] = None
 
     @classmethod
