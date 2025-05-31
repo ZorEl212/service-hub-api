@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 
 from models import auth, storage
 from models.user import User
-from schemas.service import CategoryCreate, CategoryRead, CategorySync
+from schemas.service import CategoryCreate, CategoryRead, CategorySync, PublicCategoryRead
 from schemas.service_provider import PublicServiceProviderRead, ServiceProvider, ServiceProviderUpdate
 from models.service_provider import ServiceProvider as ServiceProviderModel
 from services.provider import ServiceProviderCRUD
@@ -75,6 +75,16 @@ async def get_categories(user: User = Depends(auth.current_user)):
     if result.success:
         return [await item.to_read_model() for item in result.value]
     raise HTTPException(status_code=400, detail=result.exception_case)
+
+@router.get("/categories/{provider_id}", response_model=list[PublicCategoryRead])
+async def get_by_provider(provider_id: str):
+    """
+    Get categories by provider ID.
+    """
+    result = await CategoryCRUD().get_by_provider(provider_id)
+    if result.success:
+        return result.value
+    raise result.exception_case
 
 @router.get("/request_sms")
 async def request_sms_verification(
