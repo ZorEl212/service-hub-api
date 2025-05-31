@@ -20,8 +20,8 @@ class ReviewCRUD(AppCRUD):
     async def create_review(
         self, data: ReviewCreate, files: Optional[List[UploadFile]], user: User
     ) -> ServiceResult:
-        customer = await models.storage.get_by_reference(Customer, "user_id", PydanticObjectId(user.id))
-        service = await models.storage.get(ServiceItem, PydanticObjectId(data.service_id))
+        customer = await self.db.get_by_reference(Customer, "user_id", PydanticObjectId(user.id))
+        service = await self.db.get(ServiceItem, PydanticObjectId(data.service_id), fetch_links=True)
         if not customer:
             return ServiceResult(AppException.ItemRequiresAuth())
         try:
@@ -50,6 +50,7 @@ class ReviewCRUD(AppCRUD):
             # Create review
             review = Review(
                 service_id=service,
+                provider_id=service.provider_id,
                 user_id=customer,
                 rating=data.rating,
                 message=data.message,
@@ -59,10 +60,21 @@ class ReviewCRUD(AppCRUD):
 
             # Update service rating
             # Calculate new average rating
-            all_reviews = await self.db.get_by_reference(Review, "service_id", service.id, batch=True)
-            new_rating = sum(r.rating for r in all_reviews) / len(all_reviews) if all_reviews else 0
-            service.rating = new_rating
-            service.reviewCount = len(all_reviews)
+            old_count = await Review.find(
+                Review.service_id.id == service.id
+            ).count()
+            old_provider_count = await Review.find(
+                Review.provider_id.id == service.provider_id.id
+            ).count()
+            old_avg = service.rating or 0.0
+            old_prov_avg = service.provider_id.averageRating or 0.0
+
+            new_avg = ((old_avg * old_count) + data.rating) / (old_count + 1)
+            new_prov_avg = ((old_prov_avg * old_provider_count) + data.rating) / (old_provider_count + 1)
+            service.rating = new_avg
+            service.provider_id.averageRating = new_prov_avg
+            service.provider_id.reviewCount = old_provider_count + 1
+            await service.provider_id.save()
             await service.save()
 
             return ServiceResult(await review.to_read_model())
