@@ -37,15 +37,15 @@ class ReviewCRUD(AppCRUD):
 
             # Process attachments if any
             attachments = {}
-            #if files:
-            #    for file in files:
-            #        id = uuid.uuid4()
-            #        public_id = f"review_{service.id}_{id}"
-            #        result = self.media_storage.upload(file, public_id)
-            #        attachments[id] = {
-            #            "public_id": public_id,
-            #            "url": result["secure_url"],
-            #        }
+            if files:
+                for file in files:
+                    id = uuid.uuid4()
+                    public_id = f"review_{service.id}_{id}"
+                    result = self.media_storage.upload(file, public_id)
+                    attachments[id] = {
+                        "public_id": public_id,
+                        "url": result["secure_url"],
+                    }
 
             # Create review
             review = Review(
