@@ -11,7 +11,8 @@ from models import media_storage
 from models.service import Category, ServiceItem
 from models.service_provider import ServiceProvider
 from models.user import User
-from schemas.service import CategoryCreate, ServiceItemCreate, ServiceItemProviderProjection, ServiceItemUpdate
+from schemas.service import CategoryCreate, PublicCategoryRead, PublicServiceItemRead, ServiceItemCreate, \
+    ServiceItemUpdate
 from services.app import AppCRUD
 from utils.exceptions import AppException
 from utils.service_result import ServiceResult
@@ -90,6 +91,25 @@ class CategoryCRUD(AppCRUD):
             print_exc()
             return ServiceResult(AppException.GetItem())
 
+    async def get_by_provider(self, provider_id: str) -> ServiceResult:
+        """
+        Get all service categories for a specific service provider.
+
+        :param provider_id: The ID of the service provider.
+        :return: ServiceResult containing the list of categories or an error.
+        """
+        try:
+            provider = await self.db.get(ServiceProvider, PydanticObjectId(provider_id))
+            if not provider:
+                return ServiceResult(AppException.NotFound({"message": "Provider not found"}))
+
+            categories = await self.db.get_by_reference(Category, "provider_id", provider.id, batch=True)
+            public_categories = [PublicCategoryRead(**(await cat.to_read_model()).model_dump()) for cat in categories]
+            return ServiceResult(public_categories)
+        except Exception as e:
+            print_exc()
+            return ServiceResult(AppException.GetItem())
+
 class ServiceItemCRUD(AppCRUD):
     """
     """
@@ -126,6 +146,25 @@ class ServiceItemCRUD(AppCRUD):
             print_exc()
             return ServiceResult(AppException.CreateItem())
 
+    async def get_all_public(self, provider_id: str) -> ServiceResult:
+        """
+        Get all public service items for a service provider.
+
+        :param provider_id: The ID of the service provider.
+        :return: ServiceResult containing the list of public service items or an error.
+        """
+        try:
+            provider = await self.db.get(ServiceProvider, PydanticObjectId(provider_id), fetch_links=True)
+            if not provider:
+                return ServiceResult(AppException.NotFound({"message": "Provider not found"}))
+
+            service_items = await self.db.get_by_reference(ServiceItem, "provider_id", provider.id, batch=True, fetch_links=True)
+            public_items = [PublicServiceItemRead(**(await item.to_read_model()).model_dump()) for item in service_items if item.status == "active"]
+            return ServiceResult(public_items)
+        except Exception as e:
+            print_exc()
+            return ServiceResult(AppException.GetItem())
+
     async def get_all(self, user: User) -> ServiceResult:
         """
         Get all service items for a service provider.
@@ -136,13 +175,13 @@ class ServiceItemCRUD(AppCRUD):
         try:
             provider = await self.db.get_by_reference(ServiceProvider, "user_id", user.id)
             if not provider:
-                return ServiceResult(AppException.NotFound("Provider not found"))
+                return ServiceResult(AppException.NotFound({"message": "Provider not found"}))
 
             service_items = await self.db.get_by_reference(ServiceItem, "provider_id", provider.id, batch=True)
             return ServiceResult([await serviceItem.to_read_model() for serviceItem in service_items])
         except Exception as e:
             print_exc()
-            return ServiceResult(AppException.GetItem())
+            return ServiceResult(AppException.GetItem({"message": "Failed to retrieve service items"}))
 
     async def get_by_id(self, service_item_id: str, user: User) -> ServiceResult:
         """
@@ -155,11 +194,11 @@ class ServiceItemCRUD(AppCRUD):
         try:
             provider = await self.db.get_by_reference(ServiceProvider, "user_id", user.id)
             if not provider:
-                return ServiceResult(AppException.NotFound("Provider not found"))
+                return ServiceResult(AppException.NotFound({"message": "Provider not found"}))
 
             service_item = await self.db.get(ServiceItem, PydanticObjectId(service_item_id), fetch_links=True)
             if not service_item:
-                return ServiceResult(AppException.NotFound("Service item not found"))
+                return ServiceResult(AppException.NotFound({"message": "Service item not found"}))
 
             await service_item.fetch_link(ServiceItem.category_id)  # Make sure category_id is resolved
             if service_item.provider_id.id != provider.id:
@@ -206,9 +245,11 @@ class ServiceItemCRUD(AppCRUD):
                 for file in files:
                     id = uuid.uuid4()
                     public_id = f"{provider.id}_{id}"
-                    result = media_storage.upload(file, public_id)
+                    result = self.media_storage.upload(file, public_id)
+                    optmized_url = self.media_storage.generate_optimized_url(public_id)
+                    print(optmized_url)
                     service_item.image_urls[id] = {"public_id": public_id, "url": result["secure_url"]}
-            await service_item.update()
+            await service_item.save()
             return ServiceResult(await service_item.to_read_model())
         except Exception as e:
             print_exc()
