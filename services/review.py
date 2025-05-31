@@ -84,6 +84,32 @@ class ReviewCRUD(AppCRUD):
                 {"message": "Failed to create review", "error": str(e)}
             ))
 
+    async def get_by_provider(self, provider_id: str, page: int = 1, limit: int = 10) -> ServiceResult:
+        try:
+            skip = (page - 1) * limit
+            reviews = (
+                await Review.find(Review.provider_id.id == PydanticObjectId(provider_id))
+                .sort(-Review.created_at)
+                .skip(skip)
+                .limit(limit)
+                .to_list()
+            )
+
+            total = await Review.find(
+                Review.provider_id.id == PydanticObjectId(provider_id)
+            ).count()
+
+            result = {
+                "page": page,
+                "limit": limit,
+                "total": total,
+                "reviews": [await review.to_read_model() for review in reviews],
+            }
+            return ServiceResult(result)
+        except Exception as e:
+            print_exc()
+            return ServiceResult(AppException.GetItem({"message": "Failed to get reviews by provider", "error": str(e)}))
+
     async def get_service_reviews(
         self, service_id: str, page: int = 1, limit: int = 10
     ) -> ServiceResult:
