@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from elasticsearch import AsyncElasticsearch, helpers
 
+from models.attributes import BusinessCategory, Subcategory
 from models.elastic.es_schema import ServiceProviderSearchDoc
 
 
@@ -23,8 +24,9 @@ class ElasticSearchConfig:
 
     async def search_providers(
             self,
-            query: Optional[str] = None,
-            category: Optional[str] = None,
+            query: Optional[str],
+            category: Optional[BusinessCategory],
+            subcategories: Optional[List[Subcategory]],
             size: int = 10
     ) -> List[str]:
         must_clauses = []
@@ -36,7 +38,6 @@ class ElasticSearchConfig:
                     "fields": [
                         "name^4",
                         "description^3",
-                        "category_text^3",
                         "service_titles^2",
                         "service_descriptions",
                         "category_titles^2",
@@ -48,13 +49,15 @@ class ElasticSearchConfig:
 
         if category:
             must_clauses.append({
-                "multi_match": {
-                    "query": category,
-                    "fields": [
-                        "category_titles^3",
-                        "category_text^2",
-                        "category_descriptions"
-                    ]
+                "term": {
+                    "category": category
+                }
+            })
+
+        if subcategories:
+            must_clauses.append({
+                "terms": {
+                    "subcategories": subcategories
                 }
             })
 
