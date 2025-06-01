@@ -40,6 +40,7 @@ class ServiceItem(BaseModel):
     rating: float
     status: str
     reviewCount: int
+    hits: int
 
     async def to_read_model(self) -> "ServiceItemRead":
         await self.fetch_link(ServiceItem.category_id)

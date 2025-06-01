@@ -146,6 +146,25 @@ class ServiceItemCRUD(AppCRUD):
             print_exc()
             return ServiceResult(AppException.CreateItem())
 
+    async def increment_hit_counter(self, service_item_id: str) -> ServiceResult:
+        """
+        Increment the hit counter for a service item.
+
+        :param service_item_id: The ID of the service item.
+        :return: ServiceResult indicating success or failure.
+        """
+        try:
+            service_item: ServiceItem = await self.db.get(ServiceItem, PydanticObjectId(service_item_id))
+            if not service_item:
+                return ServiceResult(AppException.NotFound({"message": "Service item not found"}))
+
+            service_item.hits += 1
+            await service_item.save()
+            return ServiceResult(True)
+        except Exception as e:
+            print_exc()
+            return ServiceResult(AppException.UpdateItem())
+
     async def get_all_public(self, provider_id: str) -> ServiceResult:
         """
         Get all public service items for a service provider.

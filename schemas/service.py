@@ -77,6 +77,7 @@ class ServiceItemRead(PydanticModel):
     featured: bool
     rating: float
     reviewCount: int
+    hits: int
     created_at: datetime.datetime
     updated_at: datetime.datetime
 

@@ -91,6 +91,16 @@ async def update_service(service_id: str, title: Annotated[str, Form()],
         return result.value
     return result.exception_case
 
+@router.post("/hit_counter/{service_id}")
+async def service_hit_counter(service_id: str):
+    """
+    Increment the hit counter for a service item.
+    """
+    result = await ServiceItemCRUD().increment_hit_counter(service_id)
+    if result.success:
+        return result.value
+    return result.exception_case
+
 @router.get("/public/{provider_id}", response_model=List[PublicServiceItemRead])
 async def get_public_services(provider_id: str):
     """
