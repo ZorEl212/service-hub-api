@@ -4,7 +4,7 @@ from typing import List, Optional, Set
 from beanie import PydanticObjectId
 
 import models
-from models.attributes import ALLOWED_SUBCATEGORIES
+from models.attributes import ALLOWED_SUBCATEGORIES, Subcategory
 from models.service import ServiceItem
 from models.service_provider import ServiceProvider
 from schemas.generic_schemas import SearchFilters
@@ -47,9 +47,10 @@ class SearchEngine:
             providers: List[ServiceProvider] = []
 
             if filters.q or filters.category:
-                if filters.category and not filters.subcategory:
-                    filters.subcategory = ALLOWED_SUBCATEGORIES.get(filters.category)
-                es_ids = await models.es.search_providers(filters.q, filters.category, filters.subcategory)
+                sub_categories = ALLOWED_SUBCATEGORIES.get(filters.category, [])
+                if filters.subcategory:
+                    sub_categories = [filters.subcategory]
+                es_ids = await models.es.search_providers(filters.q, filters.category, sub_categories)
                 candidate_provider_ids = set(PydanticObjectId(id) for id in es_ids)
                 id_selection_filter_applied = True
                 if not candidate_provider_ids:
