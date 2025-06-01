@@ -43,7 +43,7 @@ class Auth:
         self.bearer_transport = BearerTransport(tokenUrl="auth/login")
 
         self.cookie_transport = CookieTransport(
-            cookie_name="auth_cookie",
+            cookie_name="auth_token",
             cookie_max_age=3600,  # in seconds
             cookie_samesite="lax",  # Adjust as needed
         )
