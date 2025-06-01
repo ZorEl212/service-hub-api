@@ -153,6 +153,8 @@ class AuthRoutes:
                 body_data["role"] = user.role
                 response.body = json.dumps(body_data).encode("utf-8")
                 response.headers["Content-Length"] = str(len(response.body))
+            else:
+                response.set_cookie(key="role", value=user.role, httponly=True, max_age=3600, samesite="lax", secure=False)
 
             print(response.body)
             await user_manager.on_after_login(user, request, response)
