@@ -30,7 +30,7 @@ async def create_review(
     print("Failed")
     raise result.exception_case
 
-@router.get("{provider_id}", response_model=dict)
+@router.get("/{provider_id}", response_model=dict)
 async def get_provider_reviews(
     provider_id: str,
     page: int = Query(1, ge=1),
