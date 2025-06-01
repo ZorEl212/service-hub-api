@@ -28,19 +28,16 @@ async def get_me(user: User = Depends(auth.current_user)):
 
 @router.put("/profile", response_model=ServiceProvider)
 async def update_profile(provider_data: ServiceProviderUpdate,
-    user: ServiceProviderModel = Depends(auth.current_user)
+    user: User = Depends(auth.current_user)
 
 ):
     """
     Update the current user's profile.
     """
-    details: ServiceProviderModel = await storage.get_by_reference(ServiceProviderModel, "user_id", user.id)
-    if details:
-        print(provider_data.address)
-        await details.set(provider_data.model_dump())
-        details.user_id = user.id
-        return details
-    return None
+    result = await ServiceProviderCRUD().update_profile(provider_data, user)
+    if result.success:
+        return result.value
+    raise result.exception_case
 
 @router.post("/profile/picture", response_model=ServiceProvider)
 async def upload_profile_picture(

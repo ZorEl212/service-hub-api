@@ -21,6 +21,25 @@ class ServiceProviderCRUD(AppCRUD):
     providers.
     """
 
+    async def update_profile(self, provider_data: ServiceProviderUpdate, user: User) -> ServiceResult:
+        """
+        Updates the service provider's profile with the provided data.
+
+        :param provider_data: The data to update the service provider's profile.
+        :param user: The current user instance.
+        :return: A ServiceResult containing the updated service provider details or an error.
+        """
+        if user.role != "provider":
+            return ServiceResult(AppException.Forbidden({
+                "message": "User is not a service provider"
+            }))
+        profile: ServiceProvider = await self.db.get_by_reference(ServiceProvider, "user_id", user.id, fetch_links=True)
+        if not profile:
+            return ServiceResult(AppException.NotFound({"message": "Service provider not found"}))
+
+        await profile.set(provider_data.model_dump(mode="python"))
+        return ServiceResult(await profile.to_read_model())
+
     async def get_me(self, user: User) -> ServiceResult:
         """
         Retrieves the service provider details for the current user.
