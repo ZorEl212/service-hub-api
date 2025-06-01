@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel
 
 from models.attributes import BusinessCategory, Subcategory
@@ -7,7 +7,7 @@ from models.attributes import BusinessCategory, Subcategory
 class SearchFilters(BaseModel):
     q: Optional[str] = None
     category: Optional[BusinessCategory] = None
-    subcategory: Optional[List[Subcategory]] = None
+    subcategory: Optional[Subcategory] = None
     location: Optional[str] = None
     rating: Optional[float] = None
     price_min: Optional[float] = None
