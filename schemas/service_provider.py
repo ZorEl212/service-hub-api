@@ -90,6 +90,7 @@ class PublicServiceProviderRead(BaseModel):
     faqs: Optional[List[dict]]
     reviewCount: Optional[int] = None
     serviceArea: Optional[str] = None
+    serviceRadius: Optional[str] = None
     averageRating: Optional[float] = None
 
     @classmethod
