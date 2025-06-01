@@ -178,7 +178,13 @@ class ServiceItemCRUD(AppCRUD):
                 return ServiceResult(AppException.NotFound({"message": "Provider not found"}))
 
             service_items = await self.db.get_by_reference(ServiceItem, "provider_id", provider.id, batch=True, fetch_links=True)
-            public_items = [PublicServiceItemRead(**(await item.to_read_model()).model_dump()) for item in service_items if item.status == "active"]
+            public_items = [
+                PublicServiceItemRead(
+                    **(await item.to_read_model()).model_dump(),
+                )
+                for item in service_items
+                if item.status == "active"
+            ]
             return ServiceResult(public_items)
         except Exception as e:
             print_exc()
